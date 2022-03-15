@@ -36,8 +36,8 @@ def Structure(*args):
 
 
 def StructureHeight(height):
-    Eps = np.array([1, 2, 3, 2, 3, 2, 3, 2, 3, 1])
-    Mu = np.ones(10)
+    Eps = np.array([1, 2, 3, 1])
+    Mu = np.ones(4)
     return Eps, Mu, height
 
 
@@ -46,7 +46,7 @@ def random_structure(Eps, NbLayers):
     i = 0
     for i in range(NbLayers):
         randEps = np.random.randint(0, len(Eps))
-        randHeight = np.random.randint(1, 350)
+        randHeight = np.random.rand(1, 350)
         layer = np.array([Eps[randEps], 1, randHeight])
         layers.append(layer)
         i += 1
@@ -59,11 +59,11 @@ def random_structure(Eps, NbLayers):
 
 
 def random_structure_imp():
-    Eps = np.array([1, 2, 3, 2, 3, 2, 3, 2, 3, 1])
-    Mu = np.ones(10)
+    Eps = np.array([1, 2, 3, 1])
+    Mu = np.ones(4)
     height = []
-    for i in range(10):
-        randHeight = np.random.randint(1, 350)
+    for i in range(4):
+        randHeight = np.random.randint(1,350)
         height.append(randHeight)
     Height = np.asarray(height)
 
@@ -105,11 +105,11 @@ class Reflection:
         :param angle: incident angle
         :return: Reflection vs wave length (400nm to 800nm)
         """
-        rangeLambda = np.linspace(400, 800, 10)
+        rangeLambda = np.linspace(400, 800, 100)
 
-        re = np.ones((10, 1), dtype=complex)
+        re = np.ones((100, 1), dtype=complex)
 
-        for i in range(10):
+        for i in range(100):
             lambda_ = rangeLambda[i]
             re[i] = self.coefficient(lambda_)
 

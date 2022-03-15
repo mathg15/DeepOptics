@@ -16,6 +16,21 @@ class ReLU:
         return outputs
 
 
+class Activation_Linear:
+    # Forward pass
+    def forward(self, inputs):
+        # Just remember values
+        self.inputs = inputs
+        self.outputs = inputs
+
+    # Backward pass
+    def backward(self, dvalues):
+        self.dinputs = dvalues.copy()
+
+    def predictions(self, outputs):
+        return outputs
+
+
 # Neural network
 
 class Net:
@@ -34,6 +49,33 @@ class Net:
         self.dinputs = np.dot(dvalues, self.weights.T)
 
 
+class Layer_Dropout:
+    # Init
+    def __init__(self, rate):
+        # Store rate, we invert it as for example for dropout
+        # of 0.1 we need success rate of 0.9
+        self.rate = 1 - rate
+
+    # Forward pass
+    def forward(self, inputs, training):
+        # Save input values
+        self.inputs = inputs
+        # If not in the training mode - return values
+        if not training:
+            self.output = inputs.copy()
+            return
+        # Generate and save scaled mask
+        self.binary_mask = np.random.binomial(1, self.rate,
+                                              size=inputs.shape) / self.rate
+        # Apply mask to output values
+        self.output = inputs * self.binary_mask
+
+    # Backward pass
+    def backward(self, dvalues):
+        # Gradient on values
+        self.dinputs = dvalues * self.binary_mask
+
+
 # Loss
 class Loss:
 
@@ -43,7 +85,6 @@ class Loss:
     def calculate(self, output, y):
         samples_losses = self.forward(output, y)
         data_loss = np.mean(samples_losses)
-        return data_loss
 
         self.accumulated_sum += np.sum(samples_losses)
         self.accumulated_count += len(samples_losses)
@@ -54,8 +95,8 @@ class Loss:
         return data_loss
 
     def new_pass(self):
-        self.accumulated_sum = 0
-        self.accumulated_count = 0.1
+        self.accumulated_sum = 0.
+        self.accumulated_count = 0.
 
 
 # Loss function
@@ -74,10 +115,53 @@ class MSELoss(Loss):
 class Optimizer_SGD:
     # Initialize optimizer - set settings,
     # learning rate of 1. is default for this optimizer
-    def __init__(self, learning_rate):
+    def __init__(self, learning_rate=1., decay=0.):
         self.learning_rate = learning_rate
+        self.current_learning_rate = learning_rate
+        self.decay = decay
+        self.iterations = 0
+
+    # Call once before any parameter updates
+    def pre_update_params(self):
+        if self.decay:
+            self.current_learning_rate = self.learning_rate * \
+                                         (1. / (1. + self.decay * self.iterations))
 
     # Update parameters
     def update_params(self, layer):
-        layer.weights += -self.learning_rate * layer.dweights
-        layer.biases += -self.learning_rate * layer.dbiases
+        layer.weights += -self.current_learning_rate * layer.dweights
+        layer.biases += -self.current_learning_rate * layer.dbiases
+        # Call once after any parameter updates
+
+    def post_update_params(self):
+        self.iterations += 1
+
+
+class Accuracy:
+    def calculate(self, predictions, y):
+        comparisons = self.compare(predictions, y)
+        accuracy = np.mean(comparisons)
+
+        self.accumulated_sum += np.sum(comparisons)
+        self.accumulated_count += len(comparisons)
+        return accuracy
+
+    def calculate_accumulated(self):
+        accuracy = self.accumulated_sum / self.accumulated_count
+        return accuracy
+
+    def new_pass(self):
+        self.accumulated_sum = 0
+        self.accumulated_count = 0
+
+
+class Accuracy_Regression(Accuracy):
+    def __init__(self):
+        self.precision = None
+
+    def init(self, y, reinit=False):
+        if self.precision is None or reinit:
+            self.precision = np.std(y) / 250
+
+    def compare(self, predictions, y):
+        return np.absolute(predictions - y) < self.precision

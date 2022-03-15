@@ -47,7 +47,8 @@ class Model:
                 self.trainable_layers.append(self.layers[i])
 
     def train(self, X, y, epoch, print_every, batch_size=None):
-
+        self.save_loss = []
+        self.epoch = epoch
         self.accuracy.init(y=y)
         train_steps = 1
 
@@ -59,12 +60,10 @@ class Model:
         for epoch in range(1, epoch + 1):
 
             print(f'Epoch : {epoch}')
-
             self.loss.new_pass()
             self.accuracy.new_pass()
 
             for step in range(train_steps):
-
                 if batch_size is None:
                     batch_X = X
                     batch_y = y
@@ -77,23 +76,28 @@ class Model:
 
                 data_loss = self.loss.calculate(output, batch_y)
                 loss = data_loss
-
                 predictions = self.output_layer_activation.predictions(output)
                 accuracy = self.accuracy.calculate(predictions, batch_y)
 
                 self.backward(output, batch_y)
 
+            self.optimizer.pre_update_params()
             for layer in self.trainable_layers:
                 self.optimizer.update_params(layer)
+            self.optimizer.post_update_params()
 
             if not step % print_every or step == train_steps - 1:
                 print(f'Step : {step}, ' +
                       f'Acc : {accuracy:.3f}, ' +
-                      f'Loss : {loss:.3f}')
+                      f'Loss : {loss:.3f}' +
+                      f'lr: {self.optimizer.current_learning_rate}')
 
-        epoch_loss = self.loss.calculate_accumulated()
-        print(f'training' +
-                  f'Loss : {epoch_loss}')
+            self.save_loss.append(loss)
+            epoch_loss = self.loss.calculate_accumulated()
+            print(f'training' +
+                  f'Loss : {epoch_loss:.3f}')
+
+            self.save_loss.append(loss)
 
     def forward(self, X):
         self.input_layer.forward(X)
@@ -113,97 +117,9 @@ class Model:
         output = self.forward(X)
         return output
 
-
-class Accuracy:
-    def calculate(self, predictions, y):
-        comparisons = self.compare(predictions, y)
-        accuracy = np.mean(comparisons)
-
-        self.accumulated_sum += np.sum(comparisons)
-        self.accumulated_count += len(comparisons)
-        return accuracy
-
-    def calculate_accumulated(self):
-        accuracy = self.accumulated_sum / self.accumulated_count
-        return accuracy
-
-    def new_pass(self):
-        self.accumulated_sum = 0
-        self.accumulated_count = 0
-
-
-class Accuracy_Regression(Accuracy):
-    def __init__(self):
-        self.precision = None
-
-    def init(self, y, reinit=False):
-        if self.precision is None or reinit:
-            self.precision = np.std(y) / 250
-
-    def compare(self, predictions, y):
-        return np.absolute(predictions - y) < self.precision
-
-
-# Dataset
-
-def DataSetGen():
-    structure = ms.random_structure_imp()
-    _, _, height = structure
-    coef = ms.Reflection(structure)
-    re = coef.genSpectrum()
-    return re, height
-
-
-def TrainingDataLoad(train_size):
-    X_train = []
-    Y_train = []
-    for i in range(train_size):
-        x_train, y_train = DataSetGen()
-        X_train.append(x_train)
-        Y_train.append(y_train)
-
-    X_train = np.asarray(X_train)
-    X_train = X_train.reshape(X_train.shape[0], -1)
-
-    Y_train = np.asarray(Y_train)
-    Y_train = Y_train.reshape(Y_train.shape[0], -1)
-
-    return X_train, Y_train
-
-
-X_train, y_train = TrainingDataLoad(1000)
-
-
-model = Model()
-model.add(nn.Net(100, 10))
-model.add(nn.ReLU())
-# model.add(nn.Net(6, 4))
-# model.add(nn.ReLU())
-
-model.set(nn.MSELoss(),
-          nn.Optimizer_SGD(learning_rate=0.1),
-          Accuracy_Regression())
-
-model.finalize()
-model.train(X_train, y_train, epoch=1000, print_every=100, batch_size=20)
-
-structure = ms.random_structure_imp()
-_,_,h = structure
-coef = ms.Reflection(structure)
-re = coef.genSpectrum()
-
-print(f'Predict: {model.predict(re.T)}')
-print(f' True : {h}')
-
-st = ms.StructureHeight(model.predict(re.T)[0])
-
-coef1 = ms.Reflection(st)
-pred = coef1.genSpectrum()
-
-rangeLambda = np.linspace(400, 800, 100)
-plt.plot(rangeLambda, re, label='True')
-plt.plot(rangeLambda, pred, label='Predict')
-plt.ylabel("Reflection")
-plt.xlabel("Wavelength")
-plt.legend(loc='best')
-plt.show()
+    def display_loss(self):
+        nb_loss_point = len(self.save_loss)
+        epoch = np.linspace(0, self.epoch, nb_loss_point)
+        Loss = np.asarray(self.save_loss)
+        plt.plot(epoch, Loss)
+        plt.show()

@@ -41,32 +41,16 @@ def StructureHeight(height):
     return Eps, Mu, height
 
 
-def random_structure(Eps, NbLayers):
-    layers = []
-    i = 0
-    for i in range(NbLayers):
-        randEps = np.random.randint(0, len(Eps))
-        randHeight = np.random.rand(1, 350)
-        layer = np.array([Eps[randEps], 1, randHeight])
-        layers.append(layer)
-        i += 1
-
-    randomLayers = np.asarray(layers)
-    epsStruc = randomLayers[:, 0]
-    muStruc = randomLayers[:, 1]
-    heightStruc = randomLayers[:, 2]
-    return epsStruc, muStruc, heightStruc
-
-
 def random_structure_imp():
     Eps = np.array([1, 2, 3, 1])
     Mu = np.ones(4)
     height = []
-    for i in range(4):
-        randHeight = np.random.randint(1,350)
+    for i in range(2):
+        randHeight = np.random.randint(1, 350)
         height.append(randHeight)
-    Height = np.asarray(height)
-
+    height = np.asarray(height)
+    Height = np.insert(height, 0, 100)
+    Height = np.insert(Height, len(Height), 100)
     return Eps, Mu, Height
 
 

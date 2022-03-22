@@ -2,7 +2,6 @@ import torch.nn as nn
 import moosh as ms
 import numpy as np
 import torch
-import torchvision
 import matplotlib.pyplot as plt
 
 
@@ -13,7 +12,9 @@ def DataSetGen():
     _, _, height = structure
     coef = ms.Reflection(structure)
     re = coef.genSpectrum()
-    return re, height.astype(float)
+    Height = np.delete(height, 0)
+    Height = np.delete(Height, len(Height)-1)
+    return re, Height.astype(float)
 
 
 def TrainingDataLoad(train_size):
@@ -36,7 +37,7 @@ def TrainingDataLoad(train_size):
 X_train, y_train = TrainingDataLoad(100)
 X_test, y_test = TrainingDataLoad(1)
 
-# print(X_test)
+# print(y_test)
 # print(type(X_test[0][0]))
 
 dataset = []
@@ -65,7 +66,7 @@ class Custom_Dataset(torch.utils.data.dataset.Dataset):
 
 
 train_loader = torch.utils.data.DataLoader(dataset=Custom_Dataset(dataset),
-                                           batch_size=100,
+                                           batch_size=1,
                                            shuffle=False)
 
 test_loader = torch.utils.data.DataLoader(dataset=Custom_Dataset(test_set),
@@ -74,17 +75,27 @@ test_loader = torch.utils.data.DataLoader(dataset=Custom_Dataset(test_set),
 
 for features, labels in test_loader:
     R = features
-    print(R)
+    # print(R)
 
 
 class Model(nn.Module):
     def __init__(self):
         super(Model, self).__init__()
         self.linear = nn.Sequential(
-            nn.Linear(100, 6),
-            nn.ReLU(),
-            nn.Linear(6, 4),
-            nn.ReLU()
+            nn.Linear(100, 512),
+            nn.LeakyReLU(),
+            nn.Linear(512, 256),
+            nn.LeakyReLU(),
+            nn.Linear(256, 128),
+            nn.LeakyReLU(),
+            nn.Linear(128, 64),
+            nn.LeakyReLU(),
+            nn.Linear(64, 32),
+            nn.LeakyReLU(),
+            nn.Linear(32, 16),
+            nn.LeakyReLU(),
+            nn.Linear(16, 2),
+            nn.LeakyReLU(),
         )
 
     def forward(self, x):
@@ -96,7 +107,7 @@ model = Model()
 model = model.double()
 print(model.eval())
 N_epochs = 100
-learning_rate = 0.009
+learning_rate = 1E-4
 loss_function = nn.MSELoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
@@ -155,10 +166,13 @@ display(losses)
 
 pred = model.forward(R)
 pred = pred.detach().numpy()
-print(pred[0])
-print(y_test)
+print(f'Pred :{pred[0][0]}')
+print(f'True : {y_test[0]}')
 
-st = ms.StructureHeight(pred[0][0])
+Pred = np.insert(pred[0][0], 0, 100)
+Pred = np.insert(Pred, len(Pred), 100)
+
+st = ms.StructureHeight(Pred)
 coef1 = ms.Reflection(st)
 spec_pred = coef1.genSpectrum()
 

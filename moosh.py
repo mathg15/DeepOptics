@@ -35,17 +35,21 @@ def Structure(*args):
     return epsStruc, muStruc, heightStruc
 
 
-def StructureHeight(height):
-    Eps = np.array([1, 2, 3, 1])
-    Mu = np.ones(4)
+def StructureHeight(height, periods):
+    Eps = np.tile([2, 3], (1, periods))
+    Eps = np.insert(Eps, 0, 1)
+    Eps = np.append(Eps, 1)
+    Mu = np.ones(2 * periods + 2)
     return Eps, Mu, height
 
 
-def random_structure_imp():
-    Eps = np.array([1, 2, 3, 1])
-    Mu = np.ones(4)
+def random_structure_imp(periods):
+    Eps = np.tile([2, 3], (1, periods))
+    Eps = np.insert(Eps, 0, 1)
+    Eps = np.append(Eps, 1)
+    Mu = np.ones(2 * periods + 2)
     height = []
-    for i in range(2):
+    for i in range(2*periods):
         randHeight = np.random.randint(1, 350)
         height.append(randHeight)
     height = np.asarray(height)
@@ -55,7 +59,7 @@ def random_structure_imp():
 
 
 def StructureBragg(periods):
-    Eps = np.tile([2, 4], (1, periods))
+    Eps = np.tile([2, 3], (1, periods))
     Eps = np.insert(Eps, 0, 1)
     Eps = np.append(Eps, 1)
 

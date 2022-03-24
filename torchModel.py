@@ -4,16 +4,16 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 
-
 # Dataset
 
 def DataSetGen():
-    structure = ms.random_structure_imp()
+    # np.random.seed(0)
+    structure = ms.random_structure_imp(5)
     _, _, height = structure
     coef = ms.Reflection(structure)
     re = coef.genSpectrum()
     Height = np.delete(height, 0)
-    Height = np.delete(Height, len(Height)-1)
+    Height = np.delete(Height, len(Height) - 1)
     return re, Height.astype(float)
 
 
@@ -37,9 +37,7 @@ def TrainingDataLoad(train_size):
 X_train, y_train = TrainingDataLoad(100)
 X_test, y_test = TrainingDataLoad(1)
 
-# print(y_test)
-# print(type(X_test[0][0]))
-
+print(y_test)
 dataset = []
 for i in range(len(X_train)):
     spec = X_train
@@ -66,18 +64,12 @@ class Custom_Dataset(torch.utils.data.dataset.Dataset):
 
 
 train_loader = torch.utils.data.DataLoader(dataset=Custom_Dataset(dataset),
-                                           batch_size=1,
+                                           batch_size=5,
                                            shuffle=False)
 
 test_loader = torch.utils.data.DataLoader(dataset=Custom_Dataset(test_set),
                                           batch_size=100,
                                           shuffle=False)
-
-for features, labels in test_loader:
-    R = features
-    # print(R)
-
-
 class Model(nn.Module):
     def __init__(self):
         super(Model, self).__init__()
@@ -94,7 +86,7 @@ class Model(nn.Module):
             nn.LeakyReLU(),
             nn.Linear(32, 16),
             nn.LeakyReLU(),
-            nn.Linear(16, 2),
+            nn.Linear(16, 10),
             nn.LeakyReLU(),
         )
 
@@ -110,6 +102,7 @@ N_epochs = 100
 learning_rate = 1E-4
 loss_function = nn.MSELoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+
 
 
 def train(model, data_loader, opt, n_epochs):
@@ -158,26 +151,31 @@ def display(losses, label='Training loss function'):
 # # Display loss evolution
 display(losses)
 
-# structure = ms.random_structure_imp()
-# _, _, h = structure
-# coef = ms.Reflection(structure)
-# re = coef.genSpectrum()
-# R = torch.from_numpy(re.T)
+#### Bragg miror ####
+structure = ms.StructureBragg(5)
+_,_, Height_Bragg = structure
+coef1 = ms.Reflection(structure)
+R = coef1.genSpectrum()
+R = np.transpose(R)
+R = torch.from_numpy(R)
+
 
 pred = model.forward(R)
 pred = pred.detach().numpy()
-print(f'Pred :{pred[0][0]}')
-print(f'True : {y_test[0]}')
 
-Pred = np.insert(pred[0][0], 0, 100)
-Pred = np.insert(Pred, len(Pred), 100)
 
-st = ms.StructureHeight(Pred)
+Pred = np.insert(pred[0], 0, 1600)
+Pred = np.insert(Pred, 11, 100)
+
+print(f'Pred :{Pred}')
+print(f'True : {Height_Bragg}')
+
+st = ms.StructureHeight(Pred, 5)
 coef1 = ms.Reflection(st)
 spec_pred = coef1.genSpectrum()
 
 rangeLambda = np.linspace(400, 800, 100)
-plt.plot(rangeLambda, X_test.T, label='True')
+plt.plot(rangeLambda, R.T, label='True')
 plt.plot(rangeLambda, spec_pred, label='Predict')
 plt.ylabel("Reflection")
 plt.xlabel("Wavelength")

@@ -3,6 +3,7 @@ import moosh as ms
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
+import time
 
 # GPU device
 assert torch.cuda.is_available()
@@ -38,7 +39,7 @@ def TrainingDataLoad(train_size):
     return X_train, Y_train
 
 
-X_train, y_train = TrainingDataLoad(1000)
+X_train, y_train = TrainingDataLoad(10000)
 X_test, y_test = TrainingDataLoad(1)
 
 dataset = []
@@ -67,7 +68,7 @@ class Custom_Dataset(torch.utils.data.dataset.Dataset):
 
 
 train_loader = torch.utils.data.DataLoader(dataset=Custom_Dataset(dataset),
-                                           batch_size=20,
+                                           batch_size=50,
                                            shuffle=False)
 test_loader = torch.utils.data.DataLoader(dataset=Custom_Dataset(test_set),
                                           batch_size=100,
@@ -103,12 +104,13 @@ model = Model().to(cuda_device)
 model = model.double()
 print(model.eval())
 N_epochs = 100
-learning_rate = 1E-4
+learning_rate = 1E-3
 loss_function = nn.MSELoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
 
 
 def train(model, data_loader, opt, n_epochs):
+    time0 = time.time()
     losses = []
     i = 0
     for epoch in range(n_epochs):  # Loop over epochs
@@ -134,8 +136,8 @@ def train(model, data_loader, opt, n_epochs):
                       (epoch + 1, i + 1, running_loss / 10))
                 running_loss = 0.0
             i += 1
-
-    print('Training done')
+    time1 = time.time()
+    print(f'Training done, time : {(time1-time0)/60}')
     return losses
 
 

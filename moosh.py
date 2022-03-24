@@ -49,7 +49,7 @@ def random_structure_imp(periods):
     Eps = np.append(Eps, 1)
     Mu = np.ones(2 * periods + 2)
     height = []
-    for i in range(2*periods):
+    for i in range(2 * periods):
         randHeight = np.random.randint(1, 350)
         height.append(randHeight)
     height = np.asarray(height)
@@ -65,7 +65,7 @@ def StructureBragg(periods):
 
     Mu = np.ones((2 * periods + 2))
 
-    Height = np.tile([600 / np.sqrt(2), 600 / (4 * 2)], (1, periods))
+    Height = np.tile([600 / (4 * np.sqrt(2)), 600 / (4 * np.sqrt(3))], (1, periods))
     Height = np.insert(Height, 0, 1600)
     Height = np.append(Height, 100)
 

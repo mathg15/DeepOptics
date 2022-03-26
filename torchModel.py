@@ -5,7 +5,7 @@ import torch
 import matplotlib.pyplot as plt
 
 key = np.random.randint(0, 1000)
-
+print(key)
 
 # Dataset
 

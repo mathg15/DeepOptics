@@ -146,7 +146,7 @@ def display(losses, label='Training loss function'):
     axes.set_xlabel('N iterations', fontsize=18)
     axes.set_ylabel('Loss', fontsize=18)
     plt.legend(loc='upper right', fontsize=16)
-    plt.savefig(f'Loss {key}')
+    plt.savefig(f'results/Loss {key}')
     plt.show()
 
 
@@ -182,5 +182,5 @@ plt.plot(rangeLambda, spec_pred, label='Predict')
 plt.ylabel("Reflection")
 plt.xlabel("Wavelength")
 plt.legend(loc='best')
-plt.savefig(f'true_vs_pred {key}')
+plt.savefig(f'results/true_vs_pred {key}')
 plt.show()

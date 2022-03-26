@@ -4,7 +4,9 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 
-key = np.random.randint(0,1000)
+key = np.random.randint(0, 1000)
+
+
 # Dataset
 
 def DataSetGen():
@@ -65,12 +67,14 @@ class Custom_Dataset(torch.utils.data.dataset.Dataset):
 
 
 train_loader = torch.utils.data.DataLoader(dataset=Custom_Dataset(dataset),
-                                           batch_size=5,
+                                           batch_size=1,
                                            shuffle=False)
 
 test_loader = torch.utils.data.DataLoader(dataset=Custom_Dataset(test_set),
                                           batch_size=100,
                                           shuffle=False)
+
+
 class Model(nn.Module):
     def __init__(self):
         super(Model, self).__init__()
@@ -103,7 +107,6 @@ N_epochs = 100
 learning_rate = 1E-4
 loss_function = nn.MSELoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
-
 
 
 def train(model, data_loader, opt, n_epochs):
@@ -155,23 +158,21 @@ display(losses)
 
 #### Bragg miror ####
 structure = ms.StructureBragg(5)
-_,_, Height_Bragg = structure
+_, _, Height_Bragg = structure
 coef1 = ms.Reflection(structure)
 R = coef1.genSpectrum()
 R = np.transpose(R)
 R = torch.from_numpy(R)
 
-
 pred = model.forward(R)
 pred = pred.detach().numpy()
 
-
 Pred = np.insert(pred[0], 0, 1600)
 Pred = np.insert(Pred, 11, 100)
-
+#
 print(f'Pred :{Pred}')
 print(f'True : {Height_Bragg}')
-
+#
 st = ms.StructureHeight(Pred, 5)
 coef1 = ms.Reflection(st)
 spec_pred = coef1.genSpectrum()

@@ -10,17 +10,17 @@ assert torch.cuda.is_available()
 cuda_device = torch.device("cuda:0")
 cpu_device = torch.device("cpu")
 
-# Dataset
-X_train = np.load('X_train_new_h.npy')
-y_train = np.load('y_train_new_h.npy')
+# Création du dataset
+X_train = np.load('X_train_new_h.npy') # Features (spectre)
+y_train = np.load('y_train_new_h.npy') # Labels (épaisseur de couche)
 
-dataset = []
+dataset = [] # Liste permettant de créer des paires (spectres, épaisseurs)
 for i in range(len(X_train)):
     spec = X_train
     H = y_train
     dataset.append((spec, H))
 
-
+# On transforme la liste en un tensor
 class Custom_Dataset(torch.utils.data.dataset.Dataset):
     def __init__(self, _dataset):
         self.dataset = _dataset
@@ -37,38 +37,41 @@ train_loader = torch.utils.data.DataLoader(dataset=Custom_Dataset(dataset),
                                            batch_size=20,
                                            shuffle=True)
 
-
+# On génère un réseau de neurones
 class Model(nn.Module):
     def __init__(self):
         super(Model, self).__init__()
         self.linear = nn.Sequential(
 
-            nn.Linear(100, 256),
-            nn.LeakyReLU(),
-            nn.Linear(256, 128),
-            nn.LeakyReLU(),
-            nn.Linear(128, 64),
-            nn.LeakyReLU(),
-            nn.Linear(64, 32),
-            nn.LeakyReLU(),
-            nn.Linear(32, 16),
-            nn.LeakyReLU(),
-            nn.Linear(16, 10),
-            nn.LeakyReLU(),
+            nn.Linear(100, 256), # Input
+            nn.LeakyReLU(), # Fonction d'activation
+            nn.Linear(256, 128), # Hidden Layer
+            nn.LeakyReLU(), # Fonction d'activation
+            nn.Linear(128, 64), # Hidden Layer
+            nn.LeakyReLU(), # Fonction d'activation
+            nn.Linear(64, 32), # Hidden Layer
+            nn.LeakyReLU(), # Fonction d'activation
+            nn.Linear(32, 16), # Hidden Layer
+            nn.LeakyReLU(), # Fonction d'activation
+            nn.Linear(16, 10), # Output
+            nn.LeakyReLU(), # Fonction d'activation
         )
 
-    def forward(self, x):
+    def forward(self, x): # Propagation vers l'avant
         x = self.linear(x)
         return x
 
 
-model = Model().to(cuda_device)
-model = model.double()
+model = Model().to(cuda_device) # Changer par cpu_device pour calculer sur CPU 
+model = model.double() # type Float64 
 print(model.eval())
+
+
 N_epochs = 5
-learning_rate = 1E-4
+learning_rate = 1E-4 
+
 loss_function = nn.MSELoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate)
+optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate) 
 
 
 def train(model, data_loader, opt, n_epochs):
@@ -117,24 +120,26 @@ def display(losses, label='Training loss function'):
 display(losses)
 
 #### Bragg miror ####
-structure = ms.StructureBragg(5)
+structure = ms.StructureBragg(5) # Génération de la structure du miroir de Bragg d'indice (2, 3)
 _, _, Height_Bragg = structure
 coef1 = ms.Reflection(structure)
-R = coef1.genSpectrum()
+R = coef1.genSpectrum() # Spectre de réflexion du miroir de Bragg en fonction de lambda ( 400nm à 800nm )
 R = np.transpose(R)
-R = torch.from_numpy(R)
-R = R.to(cpu_device)
+R = torch.from_numpy(R) # Array to Tensor
+R = R.to(cpu_device) # Faut pas changer le device
 
-model = model.to(cpu_device)
-pred = model.forward(R)
-pred = pred.detach().numpy()
+model = model.to(cpu_device) # Ici non plus
+pred = model.forward(R) # On fait passer le spectre à travers le N.N.
+pred = pred.detach().numpy() # Tensor to array
 
+# On rajoute les couches d'air pour tracer le spectre
 Pred = np.insert(pred[0], 0, 1600)
 Pred = np.insert(Pred, 11, 100)
 
 print(f'Pred :{Pred}')
 print(f'True : {Height_Bragg}')
 
+# Moosh pour tracer le spectre
 st = ms.StructureHeight(Pred, 5)
 coef1 = ms.Reflection(st)
 spec_pred = coef1.genSpectrum()

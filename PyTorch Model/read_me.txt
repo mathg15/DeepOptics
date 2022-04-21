@@ -1,4 +1,4 @@
-#Structure des spectres générés : 
+Structure des spectres générés : 
 Eps : [2, 3, 2, 3, 2, 3, 2, 3, 2, 3]
 Mu : [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 Hauteur : int random entre 40 et 200 nm
@@ -22,3 +22,6 @@ Optimizer : SGD ( https://pytorch.org/docs/stable/generated/torch.optim.SGD.html
 
 Entrainement du model avec un backpropagation
 
+Le model est testé avec un miroir de Bragg dont les indices sont [2, 3]
+
+Les hauteurs prédites sont rentrées dans Moosh pour générer un spectre
